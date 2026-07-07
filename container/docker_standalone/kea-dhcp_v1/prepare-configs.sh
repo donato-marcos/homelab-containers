@@ -46,8 +46,8 @@ echo "Gerando config/kea/subnets4.json..."
 cat > "config/kea/subnets4.json" <<EOF
 "subnet4": [
     {
-        "id": ${SUBNET4_ID},
-        "subnet": "${SUBNET4}",
+        "id": ${SUBNET4_POOL_ID},
+        "subnet": "${SUBNET4_POOL}",
         "pools": [
             {
                 "pool": "${POOL4}"
@@ -76,8 +76,8 @@ echo "Gerando config/kea/subnets6.json..."
 cat > "config/kea/subnets6.json" <<EOF
 "subnet6": [
     {
-        "id": ${SUBNET6_ID},
-        "subnet": "${SUBNET6}",
+        "id": ${SUBNET6_POOL_ID},
+        "subnet": "${SUBNET6_POOL}",
         "pools": [
             {
                 "pool": "${POOL6}"
