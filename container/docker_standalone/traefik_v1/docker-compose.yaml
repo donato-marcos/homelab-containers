@@ -1,0 +1,80 @@
+---
+name: reverse-proxy
+
+services:
+  # -------------------
+  # Traefik reverse proxy
+  # -------------------
+  traefik:
+    image: traefik:${VERSION:-v3.7.5}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
+
+      # HTTP router
+      - "traefik.http.routers.traefik-http.rule=Host(`traefik.${DOMAIN:-teste.local}`)"
+      - "traefik.http.routers.traefik-http.entrypoints=web"
+
+      ## HTTPS router
+      #- "traefik.http.routers.traefik-https.rule=Host(`traefik.${DOMAIN}`)"
+      #- "traefik.http.routers.traefik-https.entrypoints=websecure"
+      #- "traefik.http.routers.traefik-https.service=api@internal"
+      #- "traefik.http.routers.traefik-https.tls=true"
+      #- "traefik.http.routers.traefik-https.tls.certresolver=${MYRESOLVER:-letsencrypt}"
+      
+      # Service
+      - "traefik.http.services.traefik.loadBalancer.server.port=8080"
+    env_file:
+      - .env.secrets
+
+    networks:
+      - traefik_public
+    expose:
+      - "8080"
+    ports:
+      - name: http
+        target: 80
+        published: 80
+        protocol: tcp
+        app_protocol: http
+      #- name: https
+      #  target: 443
+      #  published: 443
+      #  protocol: tcp
+      #  app_protocol: https
+
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: true
+      - type: bind
+        source: ./traefik.yaml
+        target: /etc/traefik/traefik.yaml
+        read_only: true
+      - type: volume
+        source: traefik_certificates
+        target: /${VOLUME_CERTS:-letsencrypt}
+    
+    restart: unless-stopped
+
+#  whoami:
+#    image: traefik/whoami
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
+#
+#      # HTTP router
+#      - "traefik.http.routers.whoami-http.rule=Host(`whoami.${DOMAIN:-teste.local}`)"
+#      - "traefik.http.routers.whoami-http.entrypoints=web"
+#
+#    networks:
+#      - traefik_public
+
+networks:
+  traefik_public:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_public}
+
+volumes:
+  traefik_certificates:

@@ -1,0 +1,55 @@
+---
+name: db
+
+services:
+  mysql:
+    image: mysql:8.0
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d
+    expose:
+      - "3306"
+    networks:
+      - backend
+      - monitoramento
+    environment:
+      - MYSQL_ROOT_PASSWORD=@lunoFat3c
+      - MYSQL_DATABASE=teste_db
+      - MYSQL_USER=aluno
+      - MYSQL_PASSWORD=alunofatec
+    restart: unless-stopped
+
+
+  workbench:
+    image: lscr.io/linuxserver/mysql-workbench:latest
+    volumes:
+      - ./config:/config
+    expose:
+      - "3000"
+    ports:
+      - "3001:3001"
+    networks:
+      - backend
+      - frontend
+    shm_size: "1gb"
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Sao_Paulo
+      - CUSTOM_USER=aluno
+      - PASSWORD=alunofatec
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  backend:
+  frontend:
+    external: true
+    name: traefik_public
+  monitoramento:
+    external: true
+    name: monitoramento_backend

@@ -1,0 +1,73 @@
+---
+name: s3-storage
+
+services:
+  # Serviço principal MinIO
+  minio:
+    image: minio/minio:${VERSION:-RELEASE.2025-04-22T22-12-26Z}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
+
+      # Router para API S3 (porta 9000)
+      - "traefik.http.routers.minio-s3.rule=Host(`files.${DOMAIN}`)"
+      - "traefik.http.routers.minio-s3.entrypoints=web"
+      #- "traefik.http.routers.minio-s3.tls.certresolver=${MYRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.minio-s3.service=minio-s3"
+      - "traefik.http.services.minio-s3.loadbalancer.server.port=9000"
+
+      # Router para Console Web (porta 9001)
+      - "traefik.http.routers.minio-console.rule=Host(`minio.${DOMAIN}`)"
+      - "traefik.http.routers.minio-console.entrypoints=web"
+      #- "traefik.http.routers.minio-console.tls.certresolver=${MYRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.minio-console.service=minio-console"
+      - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
+
+      ## Middleware para CORS e Headers de Segurança
+      #- "traefik.http.middlewares.minio-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      #- "traefik.http.middlewares.minio-headers.headers.customrequestheaders.X-Forwarded-Port=443"
+      #- "traefik.http.middlewares.minio-headers.headers.accesscontrolallowmethods=GET,OPTIONS,PUT,POST,DELETE"
+      #- "traefik.http.middlewares.minio-headers.headers.accesscontrolallowheaders=*"
+      #- "traefik.http.middlewares.minio-headers.headers.accesscontrolalloworiginlist=https://*.${DOMAIN}"
+      #- "traefik.http.middlewares.minio-headers.headers.accesscontrolmaxage=100"
+      #- "traefik.http.middlewares.minio-headers.headers.addvaryheader=true"
+
+      ## Aplicar middleware em ambos os routers
+      #- "traefik.http.routers.minio-s3.middlewares=minio-headers"
+      #- "traefik.http.routers.minio-console.middlewares=minio-headers"
+
+    env_file:
+      - .env.secrets
+      - .env.config
+
+    environment:
+      # URLs para integração com Traefik
+      - MINIO_BROWSER_REDIRECT_URL=http://minio.${DOMAIN}
+      #- MINIO_BROWSER_REDIRECT_URL=https://minio.${DOMAIN}
+
+      # Configurações de API
+      - MINIO_API_CORS_ALLOW_ORIGIN=http://*.${DOMAIN}
+      #- MINIO_API_CORS_ALLOW_ORIGIN=https://*.${DOMAIN}
+
+    networks:
+      - traefik_public
+    expose:
+      - "9000"
+      - "9001"
+
+    volumes:
+      - minio_data:/data
+
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+
+
+networks:
+  #app_network:
+    #external: true
+  traefik_public:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_public}
+
+volumes:
+  minio_data:

@@ -1,0 +1,7 @@
+[client]
+user = exporter
+password = exporter123
+
+[client.servers]
+user = root
+password = @lunoFat3c

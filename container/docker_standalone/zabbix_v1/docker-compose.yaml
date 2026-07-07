@@ -1,0 +1,139 @@
+---
+name: zabbix
+
+services:
+  # -------------------
+  # Zabbix Database
+  # -------------------
+  db:
+    image: postgres:16-alpine
+    networks:
+      - database
+    expose:
+      - "5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      POSTGRES_DB: zabbix
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zabbix -d zabbix -h localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # -------------------
+  # Zabbix Server
+  # -------------------
+  server:
+    image: zabbix/zabbix-server-pgsql:7.4.2-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - database
+      - backend
+    expose:
+      - "10051"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - zbx_server_conf:/etc/zabbix
+    environment:
+      DB_SERVER_HOST: db
+      DB_SERVER_PORT: 5432
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      POSTGRES_DB: zabbix
+#    healthcheck:
+#      test: ["CMD-SHELL", "pgrep zabbix_server || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+    restart: unless-stopped
+
+  # -------------------
+  # Zabbix Web
+  # -------------------
+  web:
+    image: zabbix/zabbix-web-nginx-pgsql:7.4.2-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+      server:
+        condition: service_started
+    networks:
+      - database
+      - backend
+      - frontend
+    expose:
+      - "8080"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - zbx_web_conf:/etc/ssl/nginx
+    environment:
+      DB_SERVER_HOST: db
+      DB_SERVER_PORT: 5432
+      ZBX_SERVER_HOST: server
+      ZBX_SERVER_PORT: 10051
+      PHP_TZ: America/Sao_Paulo
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_public"
+
+      # HTTP router (apenas redireciona para HTTPS)
+      - "traefik.http.routers.zabbix-http.rule=Host(`zabbix.teste.local`)"
+      - "traefik.http.routers.zabbix-http.entrypoints=web"
+      - "traefik.http.services.zabbix.loadbalancer.server.port=8080"
+    restart: unless-stopped
+
+  # -------------------
+  # Zabbix Agent
+  # -------------------
+  agent:
+    image: zabbix/zabbix-agent2:7.4.2-alpine
+    container_name: zabbix-agent
+    networks:
+      - backend
+    expose:
+      - "10050"
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - server
+    environment:
+      ZBX_HOSTNAME: Zabbix server
+      ZBX_SERVER_HOST: server
+      ZBX_METADATA: Linux
+      ZBX_ENABLEREMOTECOMMANDS: 1
+      ZBX_LOGREMOTECOMMANDS: 1
+      ZBX_ALLOWROOT: 1
+    cap_add:
+      - SYS_ADMIN
+      - NET_ADMIN
+      - SYS_TIME
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  zbx_server_conf:
+  zbx_web_conf:
+
+networks:
+  frontend:
+    external: true
+    name: traefik_public
+  backend:
+    driver: bridge
+  database:
+    driver: bridge
+

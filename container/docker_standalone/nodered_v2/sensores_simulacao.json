@@ -1,0 +1,355 @@
+[
+    {
+        "id": "6849c10d72ac59a7",
+        "type": "tab",
+        "label": "Simulando Sensores",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "c741a7f8db9a4898",
+        "type": "inject",
+        "z": "6849c10d72ac59a7",
+        "name": "Temperatura 10s",
+        "props": [
+            {
+                "p": "payload",
+                "v": "",
+                "vt": "date"
+            },
+            {
+                "p": "topic",
+                "v": "temperature",
+                "vt": "str"
+            }
+        ],
+        "repeat": "10",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "temperature",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 60,
+        "wires": [
+            [
+                "65603ecd16ae86df"
+            ]
+        ]
+    },
+    {
+        "id": "65603ecd16ae86df",
+        "type": "function",
+        "z": "6849c10d72ac59a7",
+        "name": "Gerar Temperatura",
+        "func": "let temp = 25 + Math.sin(Date.now()/60000)*5 + (Math.random()-0.5)*2;\nmsg.topic = 'temperature';\nmsg.payload = `sensor_value{sensor=\"temperature_sensor\",unit=\"celsius\"} ${temp.toFixed(2)}`;\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 60,
+        "wires": [
+            [
+                "83de91667e988433"
+            ]
+        ]
+    },
+    {
+        "id": "ee8244ab4c385014",
+        "type": "inject",
+        "z": "6849c10d72ac59a7",
+        "name": "Pressão 15s",
+        "repeat": "15",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "pressure",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 120,
+        "wires": [
+            [
+                "451da33cb26779b6"
+            ]
+        ]
+    },
+    {
+        "id": "451da33cb26779b6",
+        "type": "function",
+        "z": "6849c10d72ac59a7",
+        "name": "Gerar Pressão",
+        "func": "let pres = 2 + Math.sin(Date.now()/30000)*0.5 + (Math.random()-0.5)*0.2;\nmsg.topic='pressure';\nmsg.payload = `sensor_value{sensor=\"pressure_sensor\",unit=\"bar\"} ${pres.toFixed(3)}`;\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 120,
+        "wires": [
+            [
+                "83de91667e988433"
+            ]
+        ]
+    },
+    {
+        "id": "0e6fbdaa7bfc387f",
+        "type": "inject",
+        "z": "6849c10d72ac59a7",
+        "name": "Vazão 5s",
+        "repeat": "5",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "flow",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 180,
+        "wires": [
+            [
+                "8a3ec72ec5170f09"
+            ]
+        ]
+    },
+    {
+        "id": "8a3ec72ec5170f09",
+        "type": "function",
+        "z": "6849c10d72ac59a7",
+        "name": "Gerar Vazão",
+        "func": "let flow = Math.max(0,50+Math.sin(Date.now()/15000)*20+(Math.random()>0.9?30:0)+(Math.random()-0.5)*5);\nmsg.topic='flow';\nmsg.payload = `sensor_value{sensor=\"flow_sensor\",unit=\"L_min\"} ${flow.toFixed(2)}`;\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 180,
+        "wires": [
+            [
+                "83de91667e988433"
+            ]
+        ]
+    },
+    {
+        "id": "bb300cf90b9105fa",
+        "type": "inject",
+        "z": "6849c10d72ac59a7",
+        "name": "Nível 20s",
+        "repeat": "20",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "level",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 240,
+        "wires": [
+            [
+                "96de9cd937885311"
+            ]
+        ]
+    },
+    {
+        "id": "96de9cd937885311",
+        "type": "function",
+        "z": "6849c10d72ac59a7",
+        "name": "Gerar Nível",
+        "func": "let level = Math.max(0,Math.min(100,60 + Math.sin(Date.now()/120000)*15 + Math.sin(Date.now()/45000)*8 + (Math.random()-0.5)*2));\nmsg.topic='level';\nmsg.payload = `sensor_value{sensor=\"level_sensor\",unit=\"percent\"} ${level.toFixed(1)}`;\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 240,
+        "wires": [
+            [
+                "83de91667e988433"
+            ]
+        ]
+    },
+    {
+        "id": "7e3e2592376784be",
+        "type": "inject",
+        "z": "6849c10d72ac59a7",
+        "name": "Vibração 2s",
+        "repeat": "2",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "vibration",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 300,
+        "wires": [
+            [
+                "557fa55236d5417b"
+            ]
+        ]
+    },
+    {
+        "id": "557fa55236d5417b",
+        "type": "function",
+        "z": "6849c10d72ac59a7",
+        "name": "Gerar Vibração",
+        "func": "let vibration = 2.5 + Math.random()*1.5 + (Math.random()>0.95?15:0);\nmsg.topic='vibration';\nmsg.payload = `sensor_value{sensor=\"vibration_sensor\",unit=\"mm_s\"} ${vibration.toFixed(3)}`;\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 300,
+        "wires": [
+            [
+                "83de91667e988433"
+            ]
+        ]
+    },
+    {
+        "id": "f471eded56e9011f",
+        "type": "inject",
+        "z": "6849c10d72ac59a7",
+        "name": "Energia 30s",
+        "repeat": "30",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "energy",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 360,
+        "wires": [
+            [
+                "a7f067d102841bfc"
+            ]
+        ]
+    },
+    {
+        "id": "a7f067d102841bfc",
+        "type": "function",
+        "z": "6849c10d72ac59a7",
+        "name": "Gerar Energia",
+        "func": "if(!context.energyTotal){context.energyTotal=0; context.lastTime=Date.now();}\nlet elapsedHours=(Date.now()-context.lastTime)/(1000*60*60);\nlet currentPower=Math.max(0,15 + Math.sin(Date.now()/180000)*8 + (Math.random()-0.5)*3);\ncontext.energyTotal+=currentPower*elapsedHours;\ncontext.lastTime=Date.now();\nmsg.topic='energy';\nmsg.payload=`sensor_value{sensor=\"energy_sensor\",unit=\"kWh\"} ${context.energyTotal.toFixed(3)}`;\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 360,
+        "wires": [
+            [
+                "83de91667e988433"
+            ]
+        ]
+    },
+    {
+        "id": "83de91667e988433",
+        "type": "join",
+        "z": "6849c10d72ac59a7",
+        "name": "Agrupar Métricas",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": true,
+        "accumulate": false,
+        "timeout": "10",
+        "count": "6",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 650,
+        "y": 200,
+        "wires": [
+            [
+                "7df97e14380e7072"
+            ]
+        ]
+    },
+    {
+        "id": "7df97e14380e7072",
+        "type": "function",
+        "z": "6849c10d72ac59a7",
+        "name": "Formatar para Pushgateway",
+        "func": "let payload = '# HELP sensor_value Valor do sensor\\n# TYPE sensor_value gauge\\n';\npayload += msg.payload.join('\\n') + '\\n';\nmsg.payload = payload;\nreturn msg;",
+        "outputs": 1,
+        "x": 820,
+        "y": 320,
+        "wires": [
+            [
+                "7ad79c565fc6fef9"
+            ]
+        ]
+    },
+    {
+        "id": "7ad79c565fc6fef9",
+        "type": "http request",
+        "z": "6849c10d72ac59a7",
+        "name": "Enviar para Pushgateway",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://monitoramento-pushgateway-1:9091/metrics/job/node_red_sensors/instance/simulation_01",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 990,
+        "y": 80,
+        "wires": [
+            [
+                "66483162a3fb95d6"
+            ]
+        ]
+    },
+    {
+        "id": "66483162a3fb95d6",
+        "type": "debug",
+        "z": "6849c10d72ac59a7",
+        "name": "Debug Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1210,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "d31f8572f5b0bb2f",
+        "type": "debug",
+        "z": "6849c10d72ac59a7",
+        "name": "Debug Métricas",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 500,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "4e37d83fd9b90ac5",
+        "type": "link out",
+        "z": "6849c10d72ac59a7",
+        "name": "Para Debug Métricas",
+        "mode": "link",
+        "links": [
+            "d31f8572f5b0bb2f"
+        ],
+        "x": 585,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "b1101dbdfa1b6a9c",
+        "type": "link in",
+        "z": "6849c10d72ac59a7",
+        "name": "Do Join Node",
+        "links": [
+            "83de91667e988433"
+        ],
+        "x": 405,
+        "y": 740,
+        "wires": [
+            [
+                "4e37d83fd9b90ac5"
+            ]
+        ]
+    }
+]

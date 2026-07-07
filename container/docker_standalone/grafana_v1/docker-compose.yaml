@@ -1,0 +1,53 @@
+---
+name: dashboard
+
+services:
+  # Grafana - Visualização de dados
+  grafana:
+    image: grafana/grafana:latest
+    user: "472:472"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:rw
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=alunofatec
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      - GF_USERS_AUTO_ASSIGN_ORG=true
+      - GF_USERS_AUTO_ASSIGN_ORG_ROLE=Viewer
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_AUTH_BASIC_ENABLED=true
+      - GF_INSTALL_PREINSTALL=grafana-clock-panel
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_public"
+
+      # HTTP router
+      - "traefik.http.routers.grafana-http.rule=Host(`grafana.teste.local`)"
+      - "traefik.http.routers.grafana-http.entrypoints=web"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    expose:
+      - "3000"
+    networks:
+      - monitoramento
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  frontend:
+    external: true
+    name: traefik_public
+  monitoramento:
+    external: true
+    name: monitoramento_backend
+      
+
+
+

@@ -1,0 +1,25 @@
+$TTL 86400
+@       IN      SOA     ns1.teste.local. admin.teste.local. (
+                        2026070501  ; Serial (Formato YYYYMMDDNN)
+                        3600        ; Refresh
+                        1800        ; Retry
+                        604800      ; Expire
+                        86400 )     ; Minimum TTL
+
+; Name Servers
+@       IN      NS      ns1.teste.local.
+@       IN      NS      ns2.teste.local.
+
+; A Records for Name Servers
+ns1     IN      A       192.168.1.10  ; IP Exemplo do Primário
+ns2     IN      A       192.168.1.11  ; IP Exemplo do Secundário
+
+; A Records for other hosts
+@       IN      A       192.168.1.100
+www     IN      A       192.168.1.100
+www     IN      AAAA    fd00:192:168:1::100
+mail    IN      A       192.168.1.101
+mail    IN      AAAA    fd00:192:168:1::101
+
+; MX Records
+@       IN      MX      10 mail.teste.local.

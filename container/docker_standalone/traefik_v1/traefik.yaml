@@ -1,0 +1,62 @@
+# API e Dashbord (Para produção, deixe comentado com #)
+api:
+  dashboard: true
+  insecure: true
+
+# Providers Docker Standalone
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: traefik_public
+
+# Entrypoints
+entryPoints:
+  web:
+    address: ":80"
+    #http:
+    #  redirections:
+    #    entryPoint:
+    #      to: websecure
+    #      scheme: https
+    #      permanent: true
+  #websecure:
+  #  address: ":443"
+
+## Let's Encrypt (certificados SSL automáticos)
+#certificatesResolvers:
+#  letsencrypt:
+#    acme:
+#      dnsChallenge:
+#        provider: cloudflare
+#      email: <SEU-EMAIL>
+#      storage: letsencrypt/acme.json
+#      #caServer: https://acme-staging-v02.api.letsencrypt.org/directory # Use para testes apenas
+
+## Metrics (opcional)
+# metrics:
+#   prometheus:
+#     addEntryPointsLabels: true
+#     addRoutersLabels: true
+#     addServicesLabels: true
+
+## Tracing OTel (opcional)
+# tracing:
+#   otel:
+#     grpc:
+#       endpoint: otel-collector:4317
+#     http:
+#       endpoint: otel-collector.observability:4318
+
+# Logs
+log:
+  level: INFO
+ 
+accessLog: {}
+#accessLog:
+#  format: json
+#  filters:
+#    statusCodes:
+#      - "200"
+#      - "400-404"
+#      - "500-503"

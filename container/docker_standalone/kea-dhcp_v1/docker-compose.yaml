@@ -1,0 +1,71 @@
+name: dhcp-server
+
+services:
+  kea4:
+    image: docker.cloudsmith.io/isc/docker/kea-dhcp4:${VERSION}
+    restart: always
+    depends_on: # delay start until database is ready
+      db:
+        condition: service_healthy
+    networks:
+      kea-10-ipvlan: # network that binds container to host network interface.
+        ipv4_address: ${IP4} # ip for kea4 server
+        ipv6_address: ${IP4_V6} # set static to avoid conflicts with kea6
+      kea-20-backend: # internal network for communication with database
+    volumes:
+      - type: bind
+        source: ./config/kea # configuration files
+        target: /etc/kea
+      - kea4-var:/var/lib/kea
+
+  kea6:
+    image: docker.cloudsmith.io/isc/docker/kea-dhcp6:${VERSION}
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      kea-10-ipvlan: # network that binds container to host network interface.
+        ipv4_address: ${IP6_V4} # ip for kea6 server
+        ipv6_address: ${IP6} # set static to avoid conflicts with kea4
+      kea-20-backend: # internal network for communication with database
+    volumes:
+      - type: bind
+        source: ./config/kea # configuration files
+        target: /etc/kea
+      - kea6-var:/var/lib/kea
+
+  db:
+    image: postgres
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U keadb -d keadb -c 'SELECT version FROM schema_version'"]
+    environment:
+      POSTGRES_PASSWORD: "@lunoFat3c"
+      POSTGRES_USER: keadb
+    volumes:
+      - database:/var/lib/posgresql
+      - type: bind
+        source: ./initdb # database setup script from kea for first run
+        target: /docker-entrypoint-initdb.d
+    networks:
+      kea-20-backend:
+
+volumes:
+  database:
+  kea4-var:
+  kea6-var:
+
+networks:
+  kea-10-ipvlan: # network that binds container to host network interface.
+    name: kea-10-ipvlan
+    driver: ipvlan
+    driver_opts:
+      parent: ${ETH} #  host interface that kea containers will use !!!!!!
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: ${SUBNET6} # subnet for kea6 server
+        - subnet: ${SUBNET4} # subnet for kea4 server
+  kea-20-backend: # internal network for communication with database
+    name: kea-20-backend

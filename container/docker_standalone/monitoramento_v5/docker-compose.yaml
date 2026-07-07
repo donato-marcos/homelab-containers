@@ -1,0 +1,149 @@
+---
+name: monitoramento
+
+services:
+  # Prometheus - Coleta de métricas
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    expose:
+      - "9090"
+    networks:
+      - backend
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_public"
+
+      # HTTP router
+      - "traefik.http.routers.prometheus-http.rule=Host(`prometheus.teste.local`)"
+      - "traefik.http.routers.prometheus-http.entrypoints=web"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+    restart: unless-stopped
+    
+  # Pushgateway - Para receber métricas do NodeRED
+  pushgateway:
+    image: prom/pushgateway:latest
+    expose:
+      - "9091"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # Alertmanager - Gerenciamento de alertas
+  alertmanager:
+    image: prom/alertmanager:latest
+    volumes:
+      - ./alertmanager/config.yml:/etc/alertmanager/config.yml
+    expose:
+      - "9093"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # cAdvisor - Monitoramento de containers
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    expose:
+      - "8080"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # Node Exporter - Métricas do sistema
+  node-exporter:
+    image: prom/node-exporter:latest
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - "9100"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # SNMP Exporter - Monitoramento SNMP
+  snmp-exporter:
+    image: prom/snmp-exporter:latest
+    volumes:
+      - ./snmp-exporter/snmp.yml:/etc/snmp/snmp.yml
+    expose:
+      - "9116"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # Blackbox Exporter - Métricas HTTP/TCP/ICMP  
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    volumes:
+      - ./blackbox-exporter/blackbox.yml:/config/blackbox.yml
+    cap_add:
+      - NET_RAW
+    expose:
+      - "9115"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # Nginx Exporter - Métrica do servidor nginx
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    command:
+      - '-nginx.scrape-uri=http://nginx:80/nginx_status'
+    networks:
+      - backend
+    expose:
+      - "9113"
+    restart: unless-stopped
+
+  # MySQL Exporter - Métricas do banco de dados
+  mysqld-exporter:
+    image: prom/mysqld-exporter:latest
+    volumes:
+      - ./mysqld-exporter/mysqld_exporter.cnf:/config/.my.cnf:ro
+    command:
+      - '--config.my-cnf=/config/.my.cnf'
+    expose:
+      - "9104"
+    networks:
+      - backend
+    restart: unless-stopped
+
+
+
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  frontend:
+    external: true
+    name: traefik_public
+  backend:
+    driver: bridge
+    attachable: true
+
+
+

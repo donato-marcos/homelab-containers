@@ -1,0 +1,31 @@
+---
+name: sites
+
+services:
+  nginx:
+    image: nginx:stable-alpine3.23-slim
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./sites:/usr/share/nginx/sites
+    networks:
+      - reverse-proxy
+      - monitoramento
+    expose:
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy_frontend"
+
+      # HTTP router
+      - "traefik.http.routers.sites-http.rule=Host(`site1.teste.local`) || Host(`site2.teste.local`) || Host(`site3.teste.local`)"
+      - "traefik.http.routers.sites-http.entrypoints=web"
+      - "traefik.http.services.sites.loadbalancer.server.port=80"
+    restart: unless-stopped
+
+networks:
+  reverse-proxy:
+    external: true
+    name: reverse-proxy
+  #monitoramento:
+  #  external: true
+  #  name: monitoramento_backend
