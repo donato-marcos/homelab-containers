@@ -6,7 +6,7 @@ services:
   # Zabbix Database
   # -------------------
   db:
-    image: postgres:16-alpine
+    image: postgres:18.4-alpine3.24
     networks:
       - database
     expose:
