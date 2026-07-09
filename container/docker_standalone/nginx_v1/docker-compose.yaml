@@ -8,13 +8,13 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./sites:/usr/share/nginx/sites
     networks:
-      - reverse-proxy
+      - frontend
       - monitoramento
     expose:
       - "80"
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=reverse-proxy_frontend"
+      - "traefik.docker.network=traefik_public"
 
       # HTTP router
       - "traefik.http.routers.sites-http.rule=Host(`site1.teste.local`) || Host(`site2.teste.local`) || Host(`site3.teste.local`)"
@@ -23,9 +23,9 @@ services:
     restart: unless-stopped
 
 networks:
-  reverse-proxy:
+  frontend:
     external: true
-    name: reverse-proxy
+    name: traefik_public
   #monitoramento:
   #  external: true
   #  name: monitoramento_backend
