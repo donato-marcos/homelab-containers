@@ -83,7 +83,9 @@ networks:
     enable_ipv6: true
     ipam:
       config:
-        - subnet: ${SUBNET6} # subnet for kea6 server
         - subnet: ${SUBNET4} # subnet for kea4 server
+        #  gateway: ${GATEWAY4}
+        - subnet: ${SUBNET6} # subnet for kea6 server
+        #  gateway: ${GATEWAY6}
   kea-20-backend: # internal network for communication with database
     name: kea-20-backend

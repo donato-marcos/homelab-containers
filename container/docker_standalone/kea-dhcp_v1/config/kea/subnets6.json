@@ -14,7 +14,7 @@
             },
             {
                 "name": "domain-search",
-                "data": "teste.local"
+                "data": "fatec.lab"
             }
         ],
         "interface": "eth0"

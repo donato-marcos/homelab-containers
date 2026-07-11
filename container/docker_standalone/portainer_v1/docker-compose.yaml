@@ -9,14 +9,14 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
     networks:
-      - reverse-proxy
+      - traefik_public
     ports:
       - "9443:9443"
       - "9000:9000"
       - "8000:8000"  # Remove if you do not intend to use Edge Agents
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=reverse-proxy"
+      - "traefik.docker.network=traefik_public"
 
       # HTTP router (apenas redireciona para HTTPS)
       - "traefik.http.routers.portainer-http.rule=Host(`portainer.teste.local`)"
@@ -30,6 +30,6 @@ volumes:
 networks:
   default:
     name: portainer_network
-  reverse-proxy:
+  traefik_public:
     external: true
-    name: reverse-proxy
+    name: traefik_public

@@ -85,7 +85,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_public"
 
-      # HTTP router (apenas redireciona para HTTPS)
+      # HTTP router
       - "traefik.http.routers.zabbix-http.rule=Host(`zabbix.teste.local`)"
       - "traefik.http.routers.zabbix-http.entrypoints=web"
       - "traefik.http.services.zabbix.loadbalancer.server.port=8080"

@@ -5,6 +5,12 @@ services:
   bind9-primary:
     image: internetsystemsconsortium/bind9:${VERSION:-9.20}
     restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          rndc status | grep -iq "server is up and running" &&
+          dig @localhost SOA ${DOMAIN:-teste.local} | grep -q "status: NOERROR"
     environment:
       - TZ=${TZ:-UTC}
     networks:
@@ -26,6 +32,12 @@ services:
   bind9-secondary:
     image: internetsystemsconsortium/bind9:${VERSION:-9.20}
     restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          rndc status | grep -iq "server is up and running" &&
+          dig @localhost SOA ${DOMAIN:-teste.local} | grep -q "status: NOERROR"
     depends_on:
       - bind9-primary
     environment:
