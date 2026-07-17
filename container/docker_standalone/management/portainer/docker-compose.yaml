@@ -19,7 +19,7 @@ services:
       - "traefik.docker.network=traefik_public"
 
       # HTTP router (apenas redireciona para HTTPS)
-      - "traefik.http.routers.portainer-http.rule=Host(`portainer.teste.local`)"
+      - "traefik.http.routers.portainer-http.rule=Host(`portainer.fatec.lab`)"
       - "traefik.http.routers.portainer-http.entrypoints=web"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 

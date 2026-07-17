@@ -14,16 +14,17 @@ services:
       # HTTP router
       - "traefik.http.routers.traefik-http.rule=Host(`traefik.${DOMAIN:-teste.local}`)"
       - "traefik.http.routers.traefik-http.entrypoints=web"
+      - "traefik.http.routers.traefik-http.service=api@internal"
 
       ## HTTPS router
       #- "traefik.http.routers.traefik-https.rule=Host(`traefik.${DOMAIN}`)"
       #- "traefik.http.routers.traefik-https.entrypoints=websecure"
       #- "traefik.http.routers.traefik-https.service=api@internal"
       #- "traefik.http.routers.traefik-https.tls=true"
-      #- "traefik.http.routers.traefik-https.tls.certresolver=${MYRESOLVER:-letsencrypt}"
+      #- "traefik.http.routers.traefik-https.tls.certresolver=${MYRESOLVER:-staging}"
       
       # Service
-      - "traefik.http.services.traefik.loadBalancer.server.port=8080"
+      #- "traefik.http.services.traefik-service.loadBalancer.server.port=8080"
     env_file:
       - .env.secrets
 
@@ -52,24 +53,30 @@ services:
         source: ./traefik.yaml
         target: /etc/traefik/traefik.yaml
         read_only: true
+      - type: bind
+        source: ./dynamic_conf.d
+        target: /etc/traefik/dynamic_conf.d
+        read_only: true
       - type: volume
         source: traefik_certificates
         target: /${VOLUME_CERTS:-letsencrypt}
     
     restart: unless-stopped
 
-#  whoami:
-#    image: traefik/whoami
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
-#
-#      # HTTP router
-#      - "traefik.http.routers.whoami-http.rule=Host(`whoami.${DOMAIN:-teste.local}`)"
-#      - "traefik.http.routers.whoami-http.entrypoints=web"
-#
-#    networks:
-#      - traefik_public
+  whoami:
+    image: traefik/whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
+
+      # HTTP router
+      - "traefik.http.routers.whoami-http.rule=Host(`whoami.${DOMAIN:-teste.local}`)"
+      - "traefik.http.routers.whoami-http.entrypoints=web"
+
+      # Service
+      - "traefik.http.services.whoami-service.loadBalancer.server.port=80"
+    networks:
+      - traefik_public
 
 networks:
   traefik_public:

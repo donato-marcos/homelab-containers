@@ -1,0 +1,67 @@
+---
+name: management
+
+services:
+  portainer:
+    image: portainer/portainer-ce:${VERSION:-lts}
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=${TRAEFIK_NETWORK:-traefik_public}"
+
+        # HTTP router
+        - "traefik.http.routers.portainer-http.rule=Host(`portainer.${DOMAIN}`)"
+        - "traefik.http.routers.portainer-http.entrypoints=web"
+        - "traefik.http.routers.portainer-http.service=portainer-service"
+
+        ## HTTPS router
+        #- "traefik.http.routers.portainer-https.rule=Host(`portainer.${DOMAIN}`)"
+        #- "traefik.http.routers.portainer-https.entrypoints=websecure"
+        #- "traefik.http.routers.portainer-https.service=portainer-service"
+        #- "traefik.http.routers.portainer-https.tls=true"
+        #- "traefik.http.routers.portainer-https.tls.certresolver=${MYRESOLVER:-staging}"
+
+        # Service
+        - "traefik.http.services.portainer-service.loadBalancer.server.port=9000"
+    ports:
+      - "9443:9443"
+      - "9000:9000"
+      - "8000:8000"
+    volumes:
+      - portainer_data:/data
+    networks:
+      - agent_network
+      - traefik_public
+
+  agent:
+    image: portainer/agent:${VERSION:-lts}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    networks:
+      - agent_network
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.platform.os == linux]
+
+networks:
+  agent_network:
+    driver: overlay
+    attachable: true
+  traefik_public:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_public}
+
+volumes:
+  portainer_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: "addr=172.16.211.50,rw,nolock,hard,nfsvers=4"
+      device: ":/mnt/swarm_data/portainer"
