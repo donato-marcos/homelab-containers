@@ -1,0 +1,65 @@
+---
+name: distribuition
+
+services:
+  registry:
+    image: registry:3.1.1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
+
+      # HTTP router
+      - "traefik.http.routers.registry-http.rule=Host(`registry.${DOMAIN:-teste.local}`)"
+      - "traefik.http.routers.registry-http.entrypoints=web"
+      - "traefik.http.routers.registry-http.service=registry-service"
+
+      # Service
+      - "traefik.http.services.registry-service.loadBalancer.server.port=5000"
+    environment:
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+    restart: always
+    networks:
+      - backend
+      - traefik_public
+    expose:
+      - "5000"
+    volumes:
+      - registry-data:/var/lib/registry
+
+  registry-ui:
+    image: joxit/docker-registry-ui:2.6.0
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
+
+      # HTTP router
+      - "traefik.http.routers.registry-ui-http.rule=Host(`registry-ui.${DOMAIN:-teste.local}`)"
+      - "traefik.http.routers.registry-ui-http.entrypoints=web"
+      - "traefik.http.routers.registry-ui-http.service=registry-ui-service"
+
+      # Service
+      - "traefik.http.services.registry-ui-service.loadBalancer.server.port=80"
+    environment:
+      - SINGLE_REGISTRY=true
+      - REGISTRY_TITLE=Registry Aesthar
+      - NGINX_PROXY_PASS_URL=http://registry:5000
+      - NGINX_RESOLVER=127.0.0.11
+      - DELETE_IMAGES=true
+      - SHOW_CONTENT_DIGEST=true
+    restart: always
+    networks:
+      - backend
+      - traefik_public
+    expose:
+      - "80"
+    depends_on:
+      - registry
+
+networks:
+  backend:
+  traefik_public:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_public}
+
+volumes:
+  registry-data:

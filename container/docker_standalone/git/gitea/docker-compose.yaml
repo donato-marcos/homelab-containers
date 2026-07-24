@@ -1,0 +1,105 @@
+---
+name: gitea
+
+services:
+  server:
+    image: docker.io/gitea/gitea:${VERSION:-1.27.0}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
+
+      # HTTP router
+      - "traefik.http.routers.gitea-http.rule=Host(`gitea.${DOMAIN:-teste.local}`)"
+      - "traefik.http.routers.gitea-http.entrypoints=web"
+      - "traefik.http.routers.gitea-http.service=gitea-service"
+
+      ## HTTPS router
+      #- "traefik.http.routers.gitea-https.rule=Host(`gitea.${DOMAIN:-teste.local}`)"
+      #- "traefik.http.routers.gitea-https.entrypoints=websecure"
+      #- "traefik.http.routers.gitea-https.service=gitea-service"
+      #- "traefik.http.routers.gitea-https.tls=true"
+      #- "traefik.http.routers.gitea-https.tls.certresolver=${MYRESOLVER:-staging}"
+      
+      # Service
+      - "traefik.http.services.gitea-service.loadBalancer.server.port=3000"
+
+    env_file:
+      - .env.server.config
+      - .env.server.secrets
+    environment:
+      - APP_NAME=Gitea Aesthar :)
+      - RUN_USER=git
+      - RUN_MODE=prod
+
+      - GITEA__ui.meta__AUTHOR=Aesthar
+      - GITEA__ui.meta__DESCRIPTION=Gitea Self-Hosted Aesthar
+
+      - GITEA__time__DEFAULT_UI_LOCATION=${TIMEZONE}
+
+      - GITEA__server__HTTP_PORT=3000
+      - GITEA__server__ROOT_URL=http://gitea.${DOMAIN:-teste.local}
+      - GITEA__server__DOMAIN=gitea.${DOMAIN:-teste.local}
+      #- GITEA__server__SSH_PORT=2222
+      #- GITEA__server__START_SSH_SERVER=true
+      #- GITEA__server__SSH_LISTEN_PORT=22
+      #- GITEA__server__DISABLE_SSH=false
+      
+    restart: always
+    networks:
+      - backend
+      - traefik_public
+    expose:
+      - "3000"
+    ports:
+      - "2222:22"
+    volumes:
+      - gitea-data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18.4-alpine3.24
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U gitea -d gitea
+    restart: always
+    env_file:
+      - .env.db.secrets
+    networks:
+      - backend
+    expose:
+      - "5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
+  runner:
+    image: docker.io/gitea/runner:nightly
+    env_file:
+      - .env.runner.secrets
+    environment:
+      #- CONFIG_FILE=/config.yaml
+      - GITEA_INSTANCE_URL=http://server:3000
+      - GITEA_RUNNER_NAME=runner-01
+      - GITEA_RUNNER_LABELS=dev:docker://gitea/runner-images:ubuntu-latest,ubuntu-latest:docker://gitea/runner-images:ubuntu-latest
+      - GITEA_RUNNER_EPHEMERAL="1"
+    networks:
+      - backend
+    volumes:
+      #- ./config.yaml:/config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - server
+
+networks:
+  backend:
+  traefik_public:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_public}
+      
+volumes:
+  gitea-data:
+  postgres-data:

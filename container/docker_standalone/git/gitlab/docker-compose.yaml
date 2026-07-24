@@ -1,0 +1,48 @@
+---
+name: git
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:${VERSION:-19.2.0-ce.0}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik_public}"
+
+      # HTTP router
+      - "traefik.http.routers.gitlab-http.rule=Host(`gitlab.${DOMAIN:-teste.local}`)"
+      - "traefik.http.routers.gitlab-http.entrypoints=web"
+      - "traefik.http.routers.gitlab-http.service=gitlab-service"
+
+      ## HTTPS router
+      #- "traefik.http.routers.gitlab-https.rule=Host(`gitlab.${DOMAIN:-teste.local}`)"
+      #- "traefik.http.routers.gitlab-https.entrypoints=websecure"
+      #- "traefik.http.routers.gitlab-https.service=gitlab-service"
+      #- "traefik.http.routers.gitlab-https.tls=true"
+      #- "traefik.http.routers.gitlab-https.tls.certresolver=${MYRESOLVER:-staging}"
+      
+      # Service
+      - "traefik.http.services.gitlab-service.loadBalancer.server.port=80"
+    restart: always
+    hostname: 'gitlab.${DOMAIN:-teste.local}'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # Add any other gitlab.rb configuration here, each on its own line
+        external_url 'http://gitlab.${DOMAIN:-teste.local}'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+    networks:
+      - traefik_public
+    expose:
+      - '80'
+      - '443'
+    ports:
+      - '2222:22'
+    volumes:
+      - './config:/etc/gitlab'
+      - './logs:/var/log/gitlab'
+      - './data:/var/opt/gitlab'
+    shm_size: '256m'
+
+networks:
+  traefik_public:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_public}
